@@ -9,7 +9,15 @@ Usage:
 
 Requires Pillow only for --render.
 """
-import struct, sys, zipfile, os, re
+
+import pathlib
+import struct
+import zipfile
+import os
+import argparse
+import re
+
+from PIL import Image, ImageDraw
 
 SCALE = 32.0          # stroke deltas are in 1/32 px units
 
@@ -114,8 +122,7 @@ def open_spd(path):
     return z, ids, pages
 
 
-def render(pages, outdir, scale=0.6):
-    from PIL import Image, ImageDraw
+def render(filename, pages, outdir, scale=0.6):
     os.makedirs(outdir, exist_ok=True)
     for i, pg in enumerate(pages, 1):
         S = [o['points'] for o in pg['objects'] if o['kind'] == 'stroke']
@@ -131,13 +138,15 @@ def render(pages, outdir, scale=0.6):
                 dr.line(pts, fill='black', width=2)
             else:
                 dr.point(pts[0], fill='black')
-        im.save(os.path.join(outdir, 'page_%02d.png' % i))
-
+        im.save(os.path.join(outdir, f"{filename}_page_{i:02d}.png"))
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print(__doc__); sys.exit(1)
-    z, ids, pages = open_spd(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Parse SPD files')
+    parser.add_argument('file', help='SPD file to parse')
+    parser.add_argument('--render', help='Directory to render pages to')
+    args = parser.parse_args()
+
+    z, ids, pages = open_spd(args.file)
     print("files:", [i.filename for i in z.infolist() if not i.filename.endswith('.page')])
     for i, pg in enumerate(pages, 1):
         st = [o for o in pg['objects'] if o['kind'] == 'stroke']
@@ -145,7 +154,6 @@ if __name__ == '__main__':
         print("page %2d %s width=%d strokes=%d other=%d points=%d meta=%s" %
               (i, pg['uuid'][:8], pg['width'], len(st), len(other),
                sum(o['n'] for o in st), pg['meta']))
-    if '--render' in sys.argv:
-        out = sys.argv[sys.argv.index('--render') + 1]
-        render(pages, out)
-        print("rendered to", out)
+    if args.render:
+        render(pathlib.Path(args.file).stem, pages, args.render)
+        print("rendered to", args.render)
