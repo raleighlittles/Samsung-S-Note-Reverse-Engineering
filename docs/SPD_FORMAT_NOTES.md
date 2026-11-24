@@ -125,3 +125,8 @@ fields (timestamps in µs, flags) are not yet mapped.
 3. Page header flag bits (flagsA/flagsB) and the optional-field gating.
 4. Text box & image objects (need samples with images/text of various styles).
 5. `media/mediaInfo.dat` and how pages reference `media/image0.png`.
+
+## References
+
+Anthropic. (2026). *Claude* (Sonnet 4.5) [Large language model]. https://claude.ai
+
