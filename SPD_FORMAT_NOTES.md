@@ -92,9 +92,23 @@ Observations worth knowing:
 * Minimum N seen is 6.
 
 ### Text box (kind 2) **[partial]**
-Body begins `54 00 00 00 1e 00 00 00 01 ae 02 20 00`, then a 4×f32 rect, then a key/value
-map using the same layout as §2 (keys seen: `MainTextbox`, `ModifiedTextbox`, `Type`), a font
-name str16 (`Roboto-Regular`) and text-run/style records. Not decoded further.
+Only one text box exists in the samples (page 1 of `Note_301213_183101`), 330-byte body:
+```
+0x00 u32 = 0x54, u32 = 0x1e     [?]  (stroke bodies start 0x1e, 0)
+0x08 u8[5] 01 ae 02 20 00       same flag bytes as a stroke, but 0x20 instead of 0x00 [?]
+0x0D f32x4 rect                 (36.0, 145.0, 1468.0, 351.0)   [OK - same position/format as strokes]
+0x1D u8[5] 01 00 00 00 00       same as strokes
+0x22 int map: u8 type=2, u16 count=3, then entries
+        (u16 keylen incl NUL, ASCII key + NUL, u32 value)       [OK]
+        MainTextbox=1, ModifiedTextbox=1, Type=17
+     u32 = 103                  [?] looks like a length, but does not land on an obvious boundary
+     ...  four f32 = 5.0 (margins/padding? [HYP]), then a series of attribute records
+          (pattern `02 00 01 00 00 00 <4-byte value> 18 00 00 00 <u32 id>`) [?]
+     font name: u16 len incl NUL (15) + ASCII "Roboto-Regular" + NUL      [OK]
+     tail: ... f32 1.3 (line spacing? [HYP]) ...
+```
+No text characters appear anywhere in the body (UTF-16 or ASCII), so this looks like an
+**empty** text box. Whether text would be stored here, and how, is unknown.
 
 ## 4. note.note / end_tag.bin **[partial]**
 Both are length-prefixed structures containing: the note UUID (str16), the page-width key
